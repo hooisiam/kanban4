@@ -3,33 +3,47 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Security: only this page's own inline script/styles may run, and the only
+     network call allowed is the FormSubmit endpoint. The script hash must be
+     recomputed whenever the inline script changes (see CLAUDE.md). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-fmIGUF3PVLHz3MUPjS5X1cBb75oRhK2KUqb0qZynKnE='; style-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>UOB IT PMO — Kanban</title>
 <style>
 /* =========================================================
-   1. Design tokens (palette + spacing scale)
+   1. Design tokens
    ========================================================= */
 :root {
-  --blue-900: #0b2a5b;
-  --blue-800: #123a78;
-  --blue-700: #1a4b96;
-  --blue-500: #2f6fd1;
-  --blue-100: #e6eefb;
-  --blue-50:  #f3f7fd;
+  /* Corporate blues */
+  --navy-900: #0d2b5e;
+  --navy-700: #1d4488;
+  --navy-100: #e3eaf6;
+  --navy-50:  #f3f6fb;
 
-  --ink-900: #1b2330;
-  --ink-700: #3d4859;
-  --ink-500: #6b7686;
-  --line:    #d7dde6;
+  /* Ink and surfaces */
+  --ink:     #1a2436;
+  --ink-2:   #475467;
+  --ink-3:   #667085;
+  --line:    #d5ddea;
   --surface: #ffffff;
-  --page:    #eef2f7;
+  --page:    #eef2f8;
 
-  --p-critical: #c62828;
-  --p-high:     #b26a00;
-  --p-medium:   #2f6fd1;
-  --p-low:      #7a8494;
+  /* Status colours (validated as a set: CVD-safe in stacking order
+     Done | In Progress | Blocked | Backlog). Shared by the chart,
+     legend and column headers. */
+  --s-done:     #2d55b8;
+  --s-progress: #3399e0;
+  --s-blocked:  #c47600;
+  --s-backlog:  #9aa8f0;
 
-  --danger:     #c62828;
-  --danger-bg:  #fdecec;
+  /* Priority (cards only) */
+  --p-critical: #b42318;
+  --p-high:     #0d2b5e;
+  --p-medium:   #667085;
+  --p-low:      #a3adbd;
+
+  --danger:     #b42318;
+  --danger-bg:  #fdeceb;
   --success:    #1e7a46;
   --success-bg: #e7f6ee;
   --warning:    #8a5300;
@@ -41,18 +55,18 @@
   --sp-4: 16px;
   --sp-5: 24px;
   --sp-6: 32px;
+  --sp-7: 48px;
 
-  --radius: 8px;
-  --radius-sm: 4px;
-  --shadow: 0 1px 2px rgba(11, 42, 91, .08), 0 2px 6px rgba(11, 42, 91, .06);
-  --shadow-lg: 0 12px 40px rgba(11, 42, 91, .25);
-  --focus: 0 0 0 3px #ffbf47;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow-lg: 0 16px 48px rgba(13, 43, 94, .28);
 
-  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Avenir Next", Avenir, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 /* =========================================================
-   2. Base / reset / accessibility helpers
+   2. Base
    ========================================================= */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -60,17 +74,14 @@ body {
   font-family: var(--font);
   font-size: 14px;
   line-height: 1.45;
-  color: var(--ink-900);
+  color: var(--ink);
   background: var(--page);
+  font-variant-numeric: tabular-nums;
 }
 h1, h2, h3, p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
-
-:focus-visible {
-  outline: 3px solid #ffbf47;
-  outline-offset: 2px;
-}
+:focus-visible { outline: 3px solid #ffbf47; outline-offset: 2px; }
 
 .visually-hidden {
   position: absolute;
@@ -84,93 +95,201 @@ button { cursor: pointer; }
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  padding: var(--sp-2) var(--sp-4);
+  padding: 9px var(--sp-4);
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   font-weight: 600;
   line-height: 1.2;
 }
-.btn-primary { background: var(--blue-700); color: #fff; }
-.btn-primary:hover { background: var(--blue-800); }
-.btn-primary[disabled] { background: var(--ink-500); cursor: progress; }
-.btn-light { background: #fff; color: var(--blue-900); border-color: #fff; }
-.btn-light:hover { background: var(--blue-100); }
-.btn-ghost { background: transparent; color: var(--blue-700); border-color: var(--line); }
-.btn-ghost:hover { background: var(--blue-50); }
+.btn-primary { background: var(--navy-700); color: #fff; }
+.btn-primary:hover { background: var(--navy-900); }
+.btn-primary[disabled] { background: var(--ink-3); cursor: progress; }
+.btn-light { background: #fff; color: var(--navy-900); }
+.btn-light:hover { background: var(--navy-100); }
+.btn-ghost { background: transparent; color: var(--navy-700); border-color: var(--line); }
+.btn-ghost:hover { background: var(--navy-50); }
 
 /* =========================================================
-   3. Header (wordmark, summary strip, add button, note)
+   3. Header
    ========================================================= */
 .app-header {
-  background: var(--blue-900);
+  background: var(--navy-900);
   color: #fff;
-  padding: var(--sp-4) var(--sp-5);
+  padding: var(--sp-4) var(--sp-5) calc(var(--sp-7) + var(--sp-4));
 }
-.header-top {
+.header-inner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sp-3);
+  gap: var(--sp-3) var(--sp-5);
+  max-width: 1440px;
+  margin: 0 auto;
 }
 .wordmark {
-  font-size: 20px;
+  font-family: var(--font-display);
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: .04em;
+  letter-spacing: -.01em;
+  line-height: 1.1;
 }
-.wordmark small {
+.wordmark-sub {
   display: block;
-  font-size: 12px;
+  margin-top: 2px;
+  font-family: var(--font);
+  font-size: 13px;
   font-weight: 400;
   letter-spacing: 0;
   color: #b9c9e6;
 }
-.summary {
+.header-side { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; }
+.demo-note { font-size: 12px; color: #b9c9e6; max-width: 34ch; }
+
+/* =========================================================
+   4. Progress panel (the stacked bar chart)
+   ========================================================= */
+main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
+
+.progress-panel {
+  position: relative;
+  margin-top: calc(-1 * var(--sp-7));
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px rgba(13, 43, 94, .12);
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+}
+.progress-headline {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.6vw, 32px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.015em;
+  color: var(--navy-900);
+  max-width: 40ch;
+}
+.legend {
   list-style: none;
-  margin: var(--sp-3) 0 0;
+  margin: var(--sp-4) 0 var(--sp-2);
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
-}
-.summary li {
-  background: rgba(255, 255, 255, .1);
-  border: 1px solid rgba(255, 255, 255, .18);
-  border-radius: 999px;
-  padding: var(--sp-1) var(--sp-3);
+  gap: var(--sp-2) var(--sp-5);
   font-size: 13px;
+  color: var(--ink-2);
 }
-.summary strong { font-size: 14px; margin-left: var(--sp-1); }
-.summary .is-overdue { background: rgba(198, 40, 40, .35); border-color: rgba(255, 160, 160, .6); }
-.demo-note {
-  margin-top: var(--sp-2);
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend strong { color: var(--ink); }
+.swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; background: var(--seg-color); }
+
+/* A bar is a row of segments separated by 2px surface gaps. Segment
+   widths come from flex-grow (the count), so they animate on change. */
+.bar {
+  display: flex;
+  gap: 2px;
+  height: 40px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--navy-50);
+  transform-origin: left center;
+  transition: transform .7s cubic-bezier(.2, .7, .2, 1);
+}
+.bar-sm { height: 14px; }
+.seg {
+  flex: 0 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--sp-2);
+  overflow: hidden;
+  white-space: nowrap;
+  background: var(--seg-color);
+  color: var(--seg-ink);
+  font-size: 13px;
+  font-weight: 700;
+  transition: flex-grow .35s ease;
+}
+.seg[hidden] { display: none; }
+.bar-sm .seg { padding: 0; }
+.is-intro .bar { transform: scaleX(0); }
+
+.st-done     { --seg-color: var(--s-done);     --seg-ink: #fff; }
+.st-progress { --seg-color: var(--s-progress); --seg-ink: #0d1f3f; }
+.st-blocked  { --seg-color: var(--s-blocked);  --seg-ink: #1c1100; }
+.st-backlog  { --seg-color: var(--s-backlog);  --seg-ink: #0d1f3f; }
+
+.by-project { margin-top: var(--sp-5); }
+.by-project-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-1) var(--sp-4);
+  margin-bottom: var(--sp-2);
+}
+.by-project-head h3 { font-family: var(--font-display); font-size: 15px; font-weight: 700; color: var(--navy-900); }
+.by-project-head p { font-size: 12px; color: var(--ink-3); }
+.project-rows { list-style: none; margin: 0; padding: 0; }
+.project-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) 1fr 104px;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: 7px var(--sp-2);
+  margin: 0 calc(-1 * var(--sp-2));
+  width: calc(100% + 2 * var(--sp-2));
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+}
+.project-row:hover { background: var(--navy-50); }
+.project-row[aria-pressed="true"] { background: var(--navy-100); box-shadow: inset 3px 0 0 var(--navy-700); }
+.project-name { font-weight: 600; color: var(--ink); }
+.project-count { font-size: 12px; color: var(--ink-2); text-align: right; }
+.project-row[aria-pressed="true"] .project-count { color: var(--navy-900); font-weight: 600; }
+
+.chart-table { margin-top: var(--sp-3); font-size: 13px; }
+.chart-table summary { cursor: pointer; color: var(--navy-700); font-weight: 600; width: max-content; }
+.chart-table table { border-collapse: collapse; margin-top: var(--sp-2); min-width: min(100%, 560px); }
+.chart-table th, .chart-table td { padding: 5px var(--sp-3); border-bottom: 1px solid var(--line); text-align: right; }
+.chart-table th:first-child, .chart-table td:first-child { text-align: left; }
+.chart-table thead th { color: var(--ink-2); font-weight: 600; }
+.chart-table tfoot td { font-weight: 700; border-bottom: 0; }
+.table-scroll { overflow-x: auto; }
+
+.chart-tip {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  background: var(--navy-900);
+  color: #fff;
   font-size: 12px;
-  color: #b9c9e6;
+  font-weight: 600;
+  padding: 5px var(--sp-2);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  white-space: nowrap;
 }
+.chart-tip[hidden] { display: none; }
 
 /* =========================================================
-   4. Filter bar
+   5. Filter bar
    ========================================================= */
-main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 .filters {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: var(--sp-3);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: var(--sp-3) var(--sp-4);
-  margin-bottom: var(--sp-4);
+  gap: var(--sp-3) var(--sp-4);
+  margin: var(--sp-5) 0 var(--sp-4);
 }
 .filters .field { min-width: 180px; flex: 1 1 180px; }
 .filters .field-actions { flex: 0 0 auto; }
 
 /* =========================================================
-   5. Form fields (shared by filter bar + add task modal)
+   6. Form fields (shared by filter bar + add task modal)
    ========================================================= */
 .field { display: flex; flex-direction: column; gap: var(--sp-1); }
-.field label { font-weight: 600; font-size: 13px; color: var(--ink-700); }
+.field label { font-weight: 600; font-size: 13px; color: var(--ink-2); }
 .field input, .field select, .field textarea {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -181,11 +300,11 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 .field textarea { resize: vertical; min-height: 72px; }
 .field [aria-invalid="true"] { border-color: var(--danger); background: var(--danger-bg); }
 .field-error { color: var(--danger); font-size: 12px; min-height: 1em; }
-.field-hint { color: var(--ink-500); font-size: 12px; }
+.field-hint { color: var(--ink-3); font-size: 12px; font-weight: 400; }
 .req { color: var(--danger); }
 
 /* =========================================================
-   6. Kanban board + columns
+   7. Kanban board + columns
    ========================================================= */
 .board {
   display: grid;
@@ -194,63 +313,62 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   align-items: start;
 }
 .column {
-  background: #e3e9f2;
-  border: 2px solid transparent;
-  border-radius: var(--radius);
+  background: var(--navy-50);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--seg-color);
+  border-radius: var(--radius-sm);
   padding: var(--sp-3);
   min-height: 240px;
   transition: background-color .15s, border-color .15s;
 }
 .column.is-drop-target {
-  background: var(--blue-100);
-  border: 2px dashed var(--blue-500);
+  background: var(--navy-100);
+  border-color: var(--navy-700);
+  border-style: dashed;
+  border-top-style: solid;
 }
 .column-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   margin-bottom: var(--sp-3);
 }
-.column-header h2 { font-size: 15px; color: var(--blue-900); }
-.count-badge {
-  background: var(--blue-900);
-  color: #fff;
-  border-radius: 999px;
-  min-width: 24px;
-  padding: 0 var(--sp-2);
-  text-align: center;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 22px;
-}
-.card-list { display: flex; flex-direction: column; gap: var(--sp-3); min-height: 80px; }
+.column-header h2 { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--navy-900); }
+.count-badge { font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.card-list { display: flex; flex-direction: column; gap: var(--sp-2); min-height: 80px; }
 .empty {
-  color: var(--ink-500);
-  font-style: italic;
+  color: var(--ink-3);
   text-align: center;
-  padding: var(--sp-4) 0;
+  padding: var(--sp-5) var(--sp-2);
   border: 1px dashed #c3ccd8;
   border-radius: var(--radius-sm);
+  font-size: 13px;
 }
 
+@media (max-width: 1023px) {
+  .board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 767px) {
   .board { grid-template-columns: 1fr; }
   main, .app-header { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+  .progress-panel { padding: var(--sp-4); }
+  .project-row { grid-template-columns: 1fr auto; gap: 6px var(--sp-3); }
+  .project-row .bar { grid-column: 1 / -1; grid-row: 2; }
 }
 
 /* =========================================================
-   7. Task cards
+   8. Task cards
    ========================================================= */
 .card {
   --prio-color: var(--p-medium);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-left: 5px solid var(--prio-color);
+  border-left: 3px solid var(--prio-color);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow);
   padding: var(--sp-3);
   cursor: grab;
 }
+.card:hover { border-color: #b8c4d6; border-left-color: var(--prio-color); }
 .card.dragging { opacity: .45; cursor: grabbing; }
 .card.prio-critical { --prio-color: var(--p-critical); }
 .card.prio-high     { --prio-color: var(--p-high); }
@@ -263,23 +381,33 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   justify-content: space-between;
   gap: var(--sp-2);
 }
-.task-id { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; color: var(--ink-500); }
-.card-title { font-size: 14px; font-weight: 700; margin: var(--sp-1) 0 var(--sp-2); word-break: break-word; }
-.card-meta { display: grid; gap: 2px; font-size: 12px; color: var(--ink-700); }
-.card-meta dt { display: inline; color: var(--ink-500); }
-.card-meta dd { display: inline; margin: 0; }
+.task-id { font-size: 12px; color: var(--ink-3); letter-spacing: .02em; }
+.card-title { font-size: 14px; font-weight: 700; line-height: 1.35; margin: 6px 0 var(--sp-2); word-break: break-word; }
+.card-meta { display: grid; gap: 2px; font-size: 12px; color: var(--ink-2); margin: 0; }
+.card-meta div { display: flex; gap: 6px; }
+.card-meta dt { color: var(--ink-3); min-width: 56px; }
+.card-meta dd { margin: 0; }
 .card-tags { display: flex; flex-wrap: wrap; gap: var(--sp-1); margin-top: var(--sp-2); }
 
-.pill, .tag, .badge-overdue {
+.prio {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--prio-color);
+}
+.prio::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--prio-color); }
+.card.prio-low .prio { color: var(--ink-3); }
+.tag, .badge-overdue {
   display: inline-block;
   font-size: 11px;
-  font-weight: 700;
-  border-radius: 999px;
-  padding: 1px var(--sp-2);
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 1px 6px;
   line-height: 18px;
 }
-.pill { color: #fff; background: var(--prio-color); }
-.tag { background: var(--blue-100); color: var(--blue-800); font-weight: 600; }
+.tag { background: var(--navy-50); color: var(--navy-700); border: 1px solid var(--navy-100); }
 .badge-overdue { background: var(--danger-bg); color: var(--danger); border: 1px solid #f3b4b4; }
 
 .card-actions {
@@ -296,37 +424,32 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   border: 1px solid transparent;
   background: transparent;
   border-radius: var(--radius-sm);
-  width: 26px; height: 26px;
+  width: 28px; height: 28px;
   font-size: 18px;
   line-height: 1;
-  color: var(--ink-500);
+  color: var(--ink-3);
 }
 .icon-btn:hover { background: var(--danger-bg); color: var(--danger); }
 .move-btn {
   border: 1px solid var(--line);
   background: #fff;
   border-radius: var(--radius-sm);
-  padding: 2px var(--sp-2);
+  padding: 3px var(--sp-2);
   font-size: 12px;
   font-weight: 600;
-  color: var(--blue-700);
+  color: var(--navy-700);
 }
-.move-btn:hover { background: var(--blue-50); }
-.move-menu {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  width: 100%;
-}
+.move-btn:hover { background: var(--navy-50); }
+.move-menu { display: flex; flex-wrap: wrap; gap: var(--sp-1); width: 100%; }
 .move-menu button {
-  border: 1px solid var(--blue-500);
-  background: var(--blue-50);
-  color: var(--blue-800);
+  border: 1px solid var(--navy-700);
+  background: var(--navy-50);
+  color: var(--navy-900);
   border-radius: var(--radius-sm);
-  padding: 2px var(--sp-2);
+  padding: 3px var(--sp-2);
   font-size: 12px;
 }
-.move-menu button:hover { background: var(--blue-100); }
+.move-menu button:hover { background: var(--navy-100); }
 .confirm-row {
   display: flex;
   align-items: center;
@@ -337,7 +460,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 }
 .confirm-row button {
   border-radius: var(--radius-sm);
-  padding: 2px var(--sp-2);
+  padding: 3px var(--sp-2);
   font-size: 12px;
   font-weight: 600;
   border: 1px solid var(--line);
@@ -346,12 +469,12 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 .confirm-row .yes { background: var(--danger); border-color: var(--danger); color: #fff; }
 
 /* =========================================================
-   8. Add Task modal
+   9. Add Task modal
    ========================================================= */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(11, 42, 91, .45);
+  background: rgba(13, 43, 94, .45);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -374,8 +497,8 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   padding: var(--sp-4) var(--sp-5);
   border-bottom: 1px solid var(--line);
 }
-.modal-header h2 { font-size: 18px; color: var(--blue-900); }
-.modal-header .icon-btn:hover { background: var(--blue-50); color: var(--blue-900); }
+.modal-header h2 { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--navy-900); }
+.modal-header .icon-btn:hover { background: var(--navy-50); color: var(--navy-900); }
 .modal-body {
   padding: var(--sp-4) var(--sp-5);
   display: grid;
@@ -395,7 +518,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 }
 
 /* =========================================================
-   9. Toasts
+   10. Toasts
    ========================================================= */
 .toast-region {
   position: fixed;
@@ -417,27 +540,56 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
 }
 .toast-success { border-color: var(--success); color: var(--success); background: var(--success-bg); }
 .toast-warning { border-color: var(--warning); color: var(--warning); background: var(--warning-bg); }
-.toast-info    { border-color: var(--blue-700); color: var(--blue-900); background: var(--blue-50); }
+.toast-info    { border-color: var(--navy-700); color: var(--navy-900); background: var(--navy-50); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bar, .seg, .column { transition: none; }
+}
 </style>
 </head>
 <body>
 
 <!-- =========================================================
-     Header: wordmark, live summary strip, add button, demo note
+     Header: wordmark, demo note, add button
      ========================================================= -->
 <header class="app-header">
-  <div class="header-top">
-    <div class="wordmark" aria-label="UOB IT PMO Kanban">
+  <div class="header-inner">
+    <div class="wordmark">
       UOB IT PMO
-      <small>IT Project Management · Kanban (internal demo / training)</small>
+      <span class="wordmark-sub">IT project board for internal demos and training</span>
     </div>
-    <button type="button" class="btn btn-light" id="open-add-btn" aria-haspopup="dialog">+ Add Task</button>
+    <div class="header-side">
+      <p class="demo-note">Demo mode: tasks live in memory only, so refreshing the page resets the board.</p>
+      <button type="button" class="btn btn-light" id="open-add-btn" aria-haspopup="dialog">+ Add task</button>
+    </div>
   </div>
-  <ul class="summary" id="summary" aria-label="Board summary"></ul>
-  <p class="demo-note">ⓘ Demo mode: the board is held in memory only. Refreshing the page resets it to the seeded demo tasks.</p>
 </header>
 
 <main>
+  <!-- =========================================================
+       Delivery progress: headline + stacked bar charts
+       (counts ALL tasks; filled by renderSummary())
+       ========================================================= -->
+  <section class="progress-panel is-intro" id="progress-panel" aria-labelledby="progress-headline">
+    <h1 class="progress-headline" id="progress-headline" aria-live="polite"></h1>
+    <ul class="legend" id="legend" aria-label="Legend"></ul>
+    <div class="bar" id="overall-bar" role="img"></div>
+
+    <div class="by-project">
+      <div class="by-project-head">
+        <h3 id="by-project-title">By project</h3>
+        <p>Select a project to filter the board. Select it again to clear.</p>
+      </div>
+      <ul class="project-rows" id="project-rows" aria-labelledby="by-project-title"></ul>
+    </div>
+
+    <details class="chart-table">
+      <summary>Show as table</summary>
+      <div class="table-scroll" id="chart-table"></div>
+    </details>
+  </section>
+  <div class="chart-tip" id="chart-tip" hidden></div>
+
   <!-- =========================================================
        Filter bar (client-side only)
        ========================================================= -->
@@ -449,7 +601,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
       </div>
       <div class="field">
         <label for="filter-assignee">Assignee contains</label>
-        <input type="text" id="filter-assignee" placeholder="e.g. Tan" autocomplete="off">
+        <input type="text" id="filter-assignee" placeholder="e.g. Tan" autocomplete="off" maxlength="60">
       </div>
       <div class="field">
         <label for="filter-priority">Priority</label>
@@ -474,12 +626,12 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
   <div class="modal" id="add-modal" role="dialog" aria-modal="true" aria-labelledby="add-modal-title">
     <form id="task-form" novalidate>
       <div class="modal-header">
-        <h2 id="add-modal-title">Add Task</h2>
+        <h2 id="add-modal-title">Add task</h2>
         <button type="button" class="icon-btn" id="close-modal-btn" aria-label="Close add task dialog">×</button>
       </div>
       <div class="modal-body">
         <div class="field span-2">
-          <label for="f-title">Task Title <span class="req" aria-hidden="true">*</span></label>
+          <label for="f-title">Task title <span class="req" aria-hidden="true">*</span></label>
           <input type="text" id="f-title" name="title" maxlength="80" required aria-describedby="err-title">
           <p class="field-error" id="err-title"></p>
         </div>
@@ -509,7 +661,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
           <p class="field-error" id="err-priority"></p>
         </div>
         <div class="field">
-          <label for="f-dueDate">Due Date <span class="req" aria-hidden="true">*</span></label>
+          <label for="f-dueDate">Due date <span class="req" aria-hidden="true">*</span></label>
           <input type="date" id="f-dueDate" name="dueDate" required aria-describedby="err-dueDate">
           <p class="field-error" id="err-dueDate"></p>
         </div>
@@ -521,7 +673,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-ghost" id="cancel-modal-btn">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="submit-btn">Add Task</button>
+        <button type="submit" class="btn btn-primary" id="submit-btn">Add task</button>
       </div>
     </form>
   </div>
@@ -557,6 +709,9 @@ const STATUS_HINTS = {
   "Blocked": "Waiting on a dependency, vendor or approval",
   "Done": "Completed / closed",
 };
+// Chart stacking order (left to right) and the CSS class carrying each status colour.
+const CHART_ORDER = ["Done", "In Progress", "Blocked", "Backlog"];
+const STATUS_CLASS = { "Backlog": "st-backlog", "In Progress": "st-progress", "Blocked": "st-blocked", "Done": "st-done" };
 const PROJECTS = [
   "Core Banking Upgrade", "Digital Channels", "Cybersecurity Uplift",
   "Data & Analytics", "Infrastructure & Cloud", "Vendor Management",
@@ -627,6 +782,16 @@ function fillSelect(select, values) {
   values.forEach((v) => select.add(new Option(v, v)));
 }
 
+function countByStatus(tasks) {
+  const counts = Object.fromEntries(STATUSES.map((s) => [s, 0]));
+  tasks.forEach((t) => { counts[t.status] += 1; });
+  return counts;
+}
+
+function plural(n, word) {
+  return `${n} ${word}${n === 1 ? "" : "s"}`;
+}
+
 /* =========================================================
    Seed data: 8 demo tasks (due dates relative to today)
    ========================================================= */
@@ -658,23 +823,151 @@ function applyFilters() {
 }
 
 /* =========================================================
-   Rendering
+   Progress chart
+   The chart's DOM is built once (buildChart) so segment widths
+   can animate; renderSummary() only updates counts and widths.
+   It counts ALL tasks, like the old header summary did.
    ========================================================= */
-function renderSummary() {
-  const counts = Object.fromEntries(STATUSES.map((s) => [s, 0]));
-  let overdue = 0;
-  state.tasks.forEach((t) => {
-    counts[t.status] += 1;
-    if (isOverdue(t)) overdue += 1;
-  });
-  const items = [
-    `<li>Total<strong>${state.tasks.length}</strong></li>`,
-    ...STATUSES.map((s) => `<li>${escapeHtml(s)}<strong>${counts[s]}</strong></li>`),
-    `<li class="${overdue ? "is-overdue" : ""}">⚠ Overdue<strong>${overdue}</strong></li>`,
-  ];
-  document.getElementById("summary").innerHTML = items.join("");
+function segmentsHtml() {
+  return CHART_ORDER.map((s) =>
+    `<span class="seg ${STATUS_CLASS[s]}" data-status="${escapeHtml(s)}" hidden></span>`
+  ).join("");
 }
 
+function buildChart() {
+  document.getElementById("legend").innerHTML = CHART_ORDER.map((s) =>
+    `<li class="${STATUS_CLASS[s]}"><span class="swatch" aria-hidden="true"></span>${escapeHtml(s)} <strong data-legend="${escapeHtml(s)}">0</strong></li>`
+  ).join("");
+  document.getElementById("overall-bar").innerHTML = segmentsHtml();
+  document.getElementById("project-rows").innerHTML = PROJECTS.map((p) => `
+    <li>
+      <button type="button" class="project-row" data-project="${escapeHtml(p)}" aria-pressed="false">
+        <span class="project-name">${escapeHtml(p)}</span>
+        <span class="bar bar-sm" aria-hidden="true">${segmentsHtml()}</span>
+        <span class="project-count"></span>
+      </button>
+    </li>`).join("");
+}
+
+// Pick the longest direct label that fits the segment's final width
+// (estimated, because the width may still be animating).
+function segmentLabel(status, n, segWidth) {
+  const fits = (text) => text.length * 8 + 16 <= segWidth;
+  if (fits(`${status} ${n}`)) return `${status} ${n}`;
+  return fits(String(n)) ? String(n) : "";
+}
+
+// Size and label one bar's segments. Direct labels only on the big bar.
+function paintBar(bar, counts, total, withLabels) {
+  const shown = CHART_ORDER.filter((s) => counts[s] > 0).length;
+  const usable = bar.clientWidth - 2 * Math.max(0, shown - 1);
+  bar.querySelectorAll(".seg").forEach((seg) => {
+    const status = seg.dataset.status;
+    const n = counts[status];
+    const share = total ? n / total : 0;
+    seg.hidden = n === 0;
+    seg.style.flexGrow = String(n);
+    seg.dataset.tip = `${status}: ${n} of ${plural(total, "task")} (${Math.round(share * 100)}%)`;
+    if (withLabels) seg.textContent = n ? segmentLabel(status, n, usable * share) : "";
+  });
+}
+
+function describeCounts(counts) {
+  return CHART_ORDER.map((s) => `${counts[s]} ${s.toLowerCase()}`).join(", ");
+}
+
+function renderSummary() {
+  const total = state.tasks.length;
+  const counts = countByStatus(state.tasks);
+  const overdue = state.tasks.filter(isOverdue).length;
+
+  // Headline sentence
+  let headline;
+  if (!total) {
+    headline = "No tasks on the board yet. Add one to start tracking delivery.";
+  } else {
+    const issues = [];
+    if (counts.Blocked) issues.push(`${counts.Blocked} blocked`);
+    if (overdue) issues.push(`${overdue} overdue`);
+    headline = `${counts.Done} of ${plural(total, "task")} done. ` +
+      (issues.length ? `${issues.join(", ")}.` : "Nothing blocked or overdue.");
+  }
+  document.getElementById("progress-headline").textContent = headline;
+
+  // Legend counts + overall bar
+  document.querySelectorAll("[data-legend]").forEach((el) => { el.textContent = counts[el.dataset.legend]; });
+  const overall = document.getElementById("overall-bar");
+  paintBar(overall, counts, total, true);
+  overall.setAttribute("aria-label", total ? `All projects: ${describeCounts(counts)}.` : "No tasks yet.");
+
+  // One row per project
+  document.querySelectorAll(".project-row").forEach((row) => {
+    const project = row.dataset.project;
+    const tasks = state.tasks.filter((t) => t.project === project);
+    const pc = countByStatus(tasks);
+    const selected = state.filters.project === project;
+    paintBar(row.querySelector(".bar"), pc, tasks.length, false);
+    row.querySelector(".project-count").textContent = tasks.length ? `${pc.Done} of ${tasks.length} done` : "No tasks";
+    row.setAttribute("aria-pressed", String(selected));
+    row.setAttribute("aria-label",
+      `${project}: ${tasks.length ? describeCounts(pc) : "no tasks"}. ` +
+      (selected ? "Showing only this project. Select to show all projects." : "Select to show only this project."));
+  });
+
+  // Table view (same numbers, for screen readers and exact values)
+  const rows = PROJECTS.map((p) => {
+    const pc = countByStatus(state.tasks.filter((t) => t.project === p));
+    const sum = STATUSES.reduce((a, s) => a + pc[s], 0);
+    return `<tr><td>${escapeHtml(p)}</td>${CHART_ORDER.map((s) => `<td>${pc[s]}</td>`).join("")}<td>${sum}</td></tr>`;
+  }).join("");
+  document.getElementById("chart-table").innerHTML = `
+    <table>
+      <thead><tr><th scope="col">Project</th>${CHART_ORDER.map((s) => `<th scope="col">${escapeHtml(s)}</th>`).join("")}<th scope="col">Total</th></tr></thead>
+      <tbody>${rows}</tbody>
+      <tfoot><tr><td>All projects</td>${CHART_ORDER.map((s) => `<td>${counts[s]}</td>`).join("")}<td>${total}</td></tr></tfoot>
+    </table>`;
+}
+
+function wireChart() {
+  const tip = document.getElementById("chart-tip");
+  const panel = document.getElementById("progress-panel");
+
+  // Hover tooltip for any segment (text only, never HTML).
+  panel.addEventListener("pointermove", (e) => {
+    const seg = e.target.closest(".seg");
+    if (!seg || seg.hidden) { tip.hidden = true; return; }
+    const row = seg.closest(".project-row");
+    tip.textContent = (row ? `${row.dataset.project}. ` : "") + seg.dataset.tip;
+    tip.hidden = false;
+    const x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+    tip.style.left = `${Math.max(8, x)}px`;
+    tip.style.top = `${e.clientY + 16}px`;
+  });
+  panel.addEventListener("pointerleave", () => { tip.hidden = true; });
+
+  // Selecting a project row toggles the project filter.
+  document.getElementById("project-rows").addEventListener("click", (e) => {
+    const row = e.target.closest(".project-row");
+    if (!row) return;
+    const select = document.getElementById("filter-project");
+    select.value = state.filters.project === row.dataset.project ? "" : row.dataset.project;
+    select.dispatchEvent(new Event("change"));
+  });
+
+  // Direct labels depend on bar width, so refit them after a resize.
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderSummary, 150);
+  });
+
+  // One orchestrated moment: the bars grow in on first load.
+  requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.remove("is-intro")));
+}
+
+/* =========================================================
+   Board rendering
+   ========================================================= */
 function renderCard(task) {
   const id = escapeHtml(task.id);
   const prio = PRIORITY_CLASS[task.priority] || "medium";
@@ -709,13 +1002,13 @@ function renderCard(task) {
     <article class="card prio-${prio}" draggable="true" data-id="${id}" aria-label="${id}: ${escapeHtml(task.title)}">
       <div class="card-top">
         <span class="task-id">${id}</span>
-        <span class="pill">${escapeHtml(task.priority)}</span>
+        <span class="prio">${escapeHtml(task.priority)}</span>
       </div>
       <h3 class="card-title">${escapeHtml(task.title)}</h3>
       <dl class="card-meta">
-        <div><dt>Project:</dt> <dd>${escapeHtml(task.project)}</dd></div>
-        <div><dt>Assignee:</dt> <dd>${escapeHtml(task.assignee)}</dd></div>
-        <div><dt>Due:</dt> <dd><time datetime="${escapeHtml(task.dueDate)}">${escapeHtml(formatDate(task.dueDate))}</time></dd></div>
+        <div><dt>Project</dt> <dd>${escapeHtml(task.project)}</dd></div>
+        <div><dt>Assignee</dt> <dd>${escapeHtml(task.assignee)}</dd></div>
+        <div><dt>Due</dt> <dd><time datetime="${escapeHtml(task.dueDate)}">${escapeHtml(formatDate(task.dueDate))}</time></dd></div>
       </dl>
       <div class="card-tags">
         <span class="tag">${escapeHtml(task.category)}</span>
@@ -734,13 +1027,13 @@ function renderBoard() {
     const slug = status.toLowerCase().replace(/\s+/g, "-");
     const noun = tasks.length === 1 ? "task" : "tasks";
     return `
-      <section class="column" data-status="${escapeHtml(status)}" aria-labelledby="col-${slug}">
+      <section class="column ${STATUS_CLASS[status]}" data-status="${escapeHtml(status)}" aria-labelledby="col-${slug}">
         <div class="column-header">
           <h2 id="col-${slug}" title="${escapeHtml(STATUS_HINTS[status])}">${escapeHtml(status)}</h2>
           <span class="count-badge" aria-label="${tasks.length} ${noun}">${tasks.length}</span>
         </div>
         <div class="card-list">
-          ${tasks.length ? tasks.map(renderCard).join("") : `<p class="empty">No tasks</p>`}
+          ${tasks.length ? tasks.map(renderCard).join("") : `<p class="empty">No tasks here. Drag a card in or use Move.</p>`}
         </div>
       </section>`;
   }).join("");
@@ -803,6 +1096,7 @@ async function notifyNewTask(task) {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       signal: controller.signal,
+      referrerPolicy: "no-referrer",
       body: JSON.stringify({
         _subject: `[UOB IT PMO] New task ${task.id}: ${task.title}`,
         _template: "table",
@@ -851,6 +1145,7 @@ function validateForm(data) {
   if (!PROJECTS.includes(data.project)) errors.project = "Choose a project / workstream.";
   if (!CATEGORIES.includes(data.category)) errors.category = "Choose a category.";
   if (!data.assignee) errors.assignee = "Assignee is required.";
+  else if (data.assignee.length > 60) errors.assignee = "Assignee must be 60 characters or fewer.";
   if (!PRIORITIES.includes(data.priority)) errors.priority = "Choose a priority.";
   if (!data.dueDate) errors.dueDate = "Due date is required.";
   else if (!/^\d{4}-\d{2}-\d{2}$/.test(data.dueDate)) errors.dueDate = "Enter a valid date.";
@@ -889,7 +1184,7 @@ function setSending(sending) {
   inFlight = sending;
   const btn = document.getElementById("submit-btn");
   btn.disabled = sending;
-  btn.textContent = sending ? "Sending…" : "Add Task";
+  btn.textContent = sending ? "Sending…" : "Add task";
   btn.setAttribute("aria-busy", String(sending));
 }
 
@@ -1071,6 +1366,9 @@ function init() {
   fillSelect(document.getElementById("f-priority"), PRIORITIES);
   fillSelect(document.getElementById("f-status"), STATUSES);
   resetForm();
+
+  buildChart();
+  wireChart();
 
   const board = document.getElementById("board");
   board.addEventListener("click", handleBoardClick);

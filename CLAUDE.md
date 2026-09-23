@@ -31,7 +31,9 @@ The command should print nothing.
   - `focusKey` restores keyboard focus after a re-render.
 - **Render cycle:** every change updates `state` or `ui` and then calls `renderBoard()`. It is the only function that writes card HTML: it runs `applyFilters()`, builds each column from `renderCard()` strings, and calls `renderSummary()`.
   - Do not change card DOM directly anywhere else.
-  - The header summary counts all tasks, while the column count badges count only the filtered tasks.
+  - The progress panel (headline, legend, overall stacked bar, one bar per project, table view) counts all tasks, while the column count badges count only the filtered tasks.
+  - The chart's DOM is built once by `buildChart()` so segment widths (`flex-grow` = count) can animate; `renderSummary()` only updates counts, widths, labels and `aria-*`. `wireChart()` adds the hover tooltip (text only), the project-row click that toggles the project filter, and a resize refit of the direct labels.
+  - Status colours live in `--s-done`, `--s-progress`, `--s-blocked` and `--s-backlog`, applied through the `STATUS_CLASS` classes. They were validated as a colour-blind-safe set in the chart order `CHART_ORDER` (Done, In Progress, Blocked, Backlog); re-validate if you change them.
   - Focus comes back by matching `ui.focusKey` against the `data-focus-key` attributes.
 - **Escaping:** every user-supplied value goes through `escapeHtml()` before it is inserted as HTML, including values used in attributes.
 - **Actions:** `addTask()`, `moveTask()` and `deleteTask()` each change `state` and then re-render.
@@ -46,6 +48,16 @@ The command should print nothing.
   - `notifyNewTask()` has a timeout, and it treats a `{success:"false"}` JSON reply as a failure.
 - **Dates:** compared as local `YYYY-MM-DD` strings (`todayISO()`, `addDays()`) to avoid timezone bugs. Seed due dates are relative to today, so the Overdue badges always show in the demo.
 - **Reference lists:** `STATUSES`, `PROJECTS`, `CATEGORIES` and `PRIORITIES` fill the selects at init and are used for validation. A column's priority colour comes from `PRIORITY_CLASS` through a `--prio-color` CSS custom property.
+
+## Content-Security-Policy
+
+`index.html` has a CSP `<meta>` tag: scripts are allowed only by the SHA-256 hash of the inline script, and `connect-src` allows only `https://formsubmit.co`. **Any edit to the `<script>` block changes its hash, and the page stops running until the hash is updated.** Recompute it after every script change:
+
+```bash
+python3 -c "import re,hashlib,base64;p='index.html';s=open(p).read();b=re.findall(r'<script>(.*?)</script>',s,re.S)[-1];h=base64.b64encode(hashlib.sha256(b.encode()).digest()).decode();open(p,'w').write(re.sub(r\"'sha256-[^']*'\",f\"'sha256-{h}'\",s,count=1));print(h)"
+```
+
+Then load the page and check the console for a CSP violation. If you change the FormSubmit endpoint's host, update `connect-src` too.
 
 ## Published artifact copy
 
