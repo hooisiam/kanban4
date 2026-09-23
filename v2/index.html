@@ -6,7 +6,7 @@
 <!-- Security: only this page's own inline script/styles may run, and the only
      network call allowed is the FormSubmit endpoint. The script hash must be
      recomputed whenever the inline script changes (see CLAUDE.md). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-fmIGUF3PVLHz3MUPjS5X1cBb75oRhK2KUqb0qZynKnE='; style-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Wsy1mTVRi8rvruQh9hfr1ddB816zQOJbQlkQerxxPCY='; style-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>UOB IT PMO — Kanban</title>
 <style>
@@ -516,6 +516,12 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
 @media (max-width: 600px) {
   .modal-body { grid-template-columns: 1fr; }
 }
+/* Welcome dialog (shown once after WELCOME_DELAY_MS on the page) */
+.modal-backdrop.welcome-backdrop { align-items: center; z-index: 60; }
+.modal.modal-sm { max-width: 440px; }
+.welcome-body { padding: var(--sp-4) var(--sp-5); color: var(--navy-900); line-height: 1.5; }
+.welcome-body p + p { margin-top: var(--sp-2); }
+.welcome-hotline { font-weight: 700; font-size: 18px; color: var(--navy-900); }
 
 /* =========================================================
    10. Toasts
@@ -679,6 +685,26 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   </div>
 </div>
 
+<!-- =========================================================
+     Welcome dialog (opened by scheduleWelcome after 10 seconds)
+     ========================================================= -->
+<div class="modal-backdrop welcome-backdrop" id="welcome-backdrop" hidden>
+  <div class="modal modal-sm" id="welcome-modal" role="dialog" aria-modal="true" aria-labelledby="welcome-title" aria-describedby="welcome-text">
+    <div class="modal-header">
+      <h2 id="welcome-title">Thanks for visiting</h2>
+      <button type="button" class="icon-btn" id="welcome-close-btn" aria-label="Close welcome dialog">×</button>
+    </div>
+    <div class="welcome-body" id="welcome-text">
+      <p>Thanks for visiting this portal.</p>
+      <p>If you need further assistance, call the IT Support hotline:
+        <a class="welcome-hotline" id="welcome-hotline" href="#"></a></p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-primary" id="welcome-ok-btn">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast notifications (announced politely to screen readers) -->
 <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
 
@@ -698,6 +724,9 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
    ========================================================= */
 const FORMSUBMIT_ENDPOINT = "https://formsubmit.co/ajax/YOUR_EMAIL@example.com";
 const NOTIFY_TIMEOUT_MS = 12000;
+// Welcome dialog: shown once after the visitor has been on the page this long.
+const WELCOME_DELAY_MS = 10000;
+const SUPPORT_HOTLINE = "18181818181";
 
 /* =========================================================
    Reference data
@@ -1231,6 +1260,50 @@ function closeModal() {
   if (backdrop.hidden) return;
   backdrop.hidden = true;
   if (lastFocusBeforeModal && document.contains(lastFocusBeforeModal)) lastFocusBeforeModal.focus();
+  if (welcomePending) openWelcome();
+}
+
+/* =========================================================
+   Welcome dialog (once per page load, after WELCOME_DELAY_MS)
+   ========================================================= */
+let welcomePending = false;
+let lastFocusBeforeWelcome = null;
+
+function scheduleWelcome() {
+  const link = document.getElementById("welcome-hotline");
+  link.textContent = SUPPORT_HOTLINE;
+  link.href = `tel:${SUPPORT_HOTLINE}`;
+  setTimeout(() => {
+    // Don't interrupt someone filling in the Add Task form; show it when that closes.
+    if (!document.getElementById("modal-backdrop").hidden) { welcomePending = true; return; }
+    openWelcome();
+  }, WELCOME_DELAY_MS);
+}
+
+function openWelcome() {
+  welcomePending = false;
+  lastFocusBeforeWelcome = document.activeElement;
+  document.getElementById("welcome-backdrop").hidden = false;
+  document.getElementById("welcome-ok-btn").focus();
+}
+
+function closeWelcome() {
+  const backdrop = document.getElementById("welcome-backdrop");
+  if (backdrop.hidden) return;
+  backdrop.hidden = true;
+  if (lastFocusBeforeWelcome && document.contains(lastFocusBeforeWelcome)) lastFocusBeforeWelcome.focus();
+}
+
+function trapWelcomeFocus(event) {
+  if (event.key !== "Tab") return;
+  const focusables = [...document.getElementById("welcome-modal").querySelectorAll("button, a[href]")];
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault(); last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault(); first.focus();
+  }
 }
 
 function trapFocus(event) {
@@ -1384,8 +1457,16 @@ function init() {
   });
   document.getElementById("add-modal").addEventListener("keydown", trapFocus);
 
+  document.getElementById("welcome-close-btn").addEventListener("click", closeWelcome);
+  document.getElementById("welcome-ok-btn").addEventListener("click", closeWelcome);
+  document.getElementById("welcome-backdrop").addEventListener("click", (e) => {
+    if (e.target.id === "welcome-backdrop") closeWelcome();
+  });
+  document.getElementById("welcome-modal").addEventListener("keydown", trapWelcomeFocus);
+
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
+    if (!document.getElementById("welcome-backdrop").hidden) { closeWelcome(); return; }
     if (!document.getElementById("modal-backdrop").hidden) { closeModal(); return; }
     if (ui.openMoveId) {
       ui.focusKey = `move:${ui.openMoveId}`;
@@ -1395,6 +1476,7 @@ function init() {
   });
 
   renderBoard();
+  scheduleWelcome();
 }
 
 init();
