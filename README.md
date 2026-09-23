@@ -4,7 +4,7 @@ A single-file IT Project Management Kanban board for internal demos and training
 
 **Live demo:** https://hooisiam.github.io/kanban4/
 
-**New design (v2):** https://hooisiam.github.io/kanban4/v2/ adds a delivery progress chart, a welcome message and an IT Support chat widget. See [v2](#v2-redesign) below.
+**New design (v2):** https://hooisiam.github.io/kanban4/v2/ adds a delivery progress chart, a light/dark mode toggle, a welcome message and an IT Support chat widget. See [v2](#v2-redesign) below.
 
 ## Screenshot
 
@@ -33,6 +33,7 @@ What v2 adds:
 - **Delivery progress panel:** a plain-language headline (for example "1 of 8 tasks done. 2 blocked, 2 overdue."), an overall stacked bar by status, and one stacked bar per project. Hover a segment for exact numbers, select a project to filter the board, or open **Show as table**
 - Status colours shared by the chart and the columns, checked for colour-blind safety
 - Quieter cards, where only Critical priority is shown in red
+- **Light / dark mode:** a sun/moon button in the header switches the theme. The page first follows the device's light or dark setting. The choice is kept in memory only, so a refresh returns to the device setting. Dark mode colours pass WCAG AA contrast
 - **Welcome message:** after 10 seconds on the page, a dialog thanks the visitor and gives the IT Support hotline. It shows once per visit, and if the Add Task form is open it waits until the form closes
 - **IT Support chat widget:** a WhatsApp-style chat button in the bottom-right corner opens the "IT Support Buddy" panel, with a cartoon puppy (inline SVG). Pick one of six suggested questions (password reset, VPN, software requests, slow laptop, phishing, printer) to get an instant answer. The panel also links to the hotline. The answers are written into the page and work offline, and the widget doesn't connect to WhatsApp
 - A Content-Security-Policy that allows only the page's own script (pinned by hash) and network calls to FormSubmit, and a no-referrer policy

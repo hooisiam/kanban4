@@ -6,7 +6,7 @@
 <!-- Security: only this page's own inline script/styles may run, and the only
      network call allowed is the FormSubmit endpoint. The script hash must be
      recomputed whenever the inline script changes (see CLAUDE.md). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-O+IWEEFF8R613Gwtyz+AOiJ+rGyw1gtIfR46GxMaMzs='; style-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-JecjSXEoKIswAiRVvE0jdE9ysxOfLqVXn2k0uasGJD4='; style-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>UOB IT PMO — Kanban</title>
 <style>
@@ -67,8 +67,116 @@
   --radius-sm: 6px;
   --shadow-lg: 0 16px 48px rgba(13, 43, 94, .28);
 
+  /* Role tokens that differ between light and dark */
+  --header-bg:      #0d2b5e;
+  --btn-primary:    #1d4488;
+  --btn-primary-hv: #0d2b5e;
+  --btn-light-bg:   #ffffff;
+  --btn-light-ink:  #0d2b5e;
+  --btn-light-hv:   #e3eaf6;
+  --field-bg:       #ffffff;
+  --line-soft:      #edf0f4;
+  --line-strong:    #b8c4d6;
+  --danger-line:    #f3b4b4;
+  --wa-ink:         #075e54;
+  --wa-bot:         #ffffff;
+  color-scheme: light;
+
   --font-display: "Avenir Next", Avenir, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Dark theme: follows the device setting unless the header toggle
+   has picked a theme (data-theme on <html>, kept in memory only). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --navy-900: #dce6f8;
+    --navy-700: #8fb3ff;
+    --navy-100: #263a60;
+    --navy-50:  #1a2742;
+
+    --ink:     #e6ecf5;
+    --ink-2:   #b3bfd1;
+    --ink-3:   #8e9bb0;
+    --line:    #2f3e5c;
+    --surface: #131e33;
+    --page:    #0b1322;
+
+    --p-critical: #ff8577;
+    --p-high:     #8fb3ff;
+    --p-medium:   #8e9bb0;
+    --p-low:      #5d6b82;
+
+    --danger:     #ff8577;
+    --danger-bg:  #3b1b1e;
+    --success:    #6fd69b;
+    --success-bg: #12301f;
+    --warning:    #f2b866;
+    --warning-bg: #33250e;
+
+    --wa-bg:     #0e1726;
+    --wa-bubble: #0b5345;
+
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, .55);
+
+    --header-bg:      #081225;
+    --btn-primary:    #2f5fc4;
+    --btn-primary-hv: #2451ad;
+    --btn-light-bg:   #dce6f8;
+    --btn-light-ink:  #081225;
+  --btn-light-hv:   #c9d6ee;
+    --field-bg:       #0f192c;
+    --line-soft:      #24324d;
+    --line-strong:    #45577a;
+    --danger-line:    #7a2e33;
+    --wa-ink:         #5fd4bd;
+    --wa-bot:         #1c2a40;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --navy-900: #dce6f8;
+  --navy-700: #8fb3ff;
+  --navy-100: #263a60;
+  --navy-50:  #1a2742;
+
+  --ink:     #e6ecf5;
+  --ink-2:   #b3bfd1;
+  --ink-3:   #8e9bb0;
+  --line:    #2f3e5c;
+  --surface: #131e33;
+  --page:    #0b1322;
+
+  --p-critical: #ff8577;
+  --p-high:     #8fb3ff;
+  --p-medium:   #8e9bb0;
+  --p-low:      #5d6b82;
+
+  --danger:     #ff8577;
+  --danger-bg:  #3b1b1e;
+  --success:    #6fd69b;
+  --success-bg: #12301f;
+  --warning:    #f2b866;
+  --warning-bg: #33250e;
+
+  --wa-bg:     #0e1726;
+  --wa-bubble: #0b5345;
+
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, .55);
+
+  --header-bg:      #081225;
+  --btn-primary:    #2f5fc4;
+  --btn-primary-hv: #2451ad;
+  --btn-light-bg:   #dce6f8;
+  --btn-light-ink:  #081225;
+  --btn-light-hv:   #c9d6ee;
+  --field-bg:       #0f192c;
+  --line-soft:      #24324d;
+  --line-strong:    #45577a;
+  --danger-line:    #7a2e33;
+  --wa-ink:         #5fd4bd;
+  --wa-bot:         #1c2a40;
+  color-scheme: dark;
 }
 
 /* =========================================================
@@ -107,11 +215,11 @@ button { cursor: pointer; }
   font-weight: 600;
   line-height: 1.2;
 }
-.btn-primary { background: var(--navy-700); color: #fff; }
-.btn-primary:hover { background: var(--navy-900); }
+.btn-primary { background: var(--btn-primary); color: #fff; }
+.btn-primary:hover { background: var(--btn-primary-hv); }
 .btn-primary[disabled] { background: var(--ink-3); cursor: progress; }
-.btn-light { background: #fff; color: var(--navy-900); }
-.btn-light:hover { background: var(--navy-100); }
+.btn-light { background: var(--btn-light-bg); color: var(--btn-light-ink); }
+.btn-light:hover { background: var(--btn-light-hv); }
 .btn-ghost { background: transparent; color: var(--navy-700); border-color: var(--line); }
 .btn-ghost:hover { background: var(--navy-50); }
 
@@ -119,7 +227,7 @@ button { cursor: pointer; }
    3. Header
    ========================================================= */
 .app-header {
-  background: var(--navy-900);
+  background: var(--header-bg);
   color: #fff;
   padding: var(--sp-4) var(--sp-5) calc(var(--sp-7) + var(--sp-4));
 }
@@ -149,6 +257,19 @@ button { cursor: pointer; }
   color: #b9c9e6;
 }
 .header-side { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; }
+.theme-toggle {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #fff;
+}
+.theme-toggle:hover { background: rgba(255, 255, 255, .12); }
+.theme-toggle svg { width: 20px; height: 20px; }
+.theme-toggle svg[hidden] { display: none; }
 .demo-note { font-size: 12px; color: #b9c9e6; max-width: 34ch; }
 
 /* =========================================================
@@ -267,7 +388,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   position: fixed;
   z-index: 60;
   pointer-events: none;
-  background: var(--navy-900);
+  background: var(--header-bg);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -300,7 +421,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: var(--sp-2);
-  background: #fff;
+  background: var(--field-bg);
   width: 100%;
 }
 .field textarea { resize: vertical; min-height: 72px; }
@@ -346,7 +467,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   color: var(--ink-3);
   text-align: center;
   padding: var(--sp-5) var(--sp-2);
-  border: 1px dashed #c3ccd8;
+  border: 1px dashed var(--line-strong);
   border-radius: var(--radius-sm);
   font-size: 13px;
 }
@@ -374,7 +495,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   padding: var(--sp-3);
   cursor: grab;
 }
-.card:hover { border-color: #b8c4d6; border-left-color: var(--prio-color); }
+.card:hover { border-color: var(--line-strong); border-left-color: var(--prio-color); }
 .card.dragging { opacity: .45; cursor: grabbing; }
 .card.prio-critical { --prio-color: var(--p-critical); }
 .card.prio-high     { --prio-color: var(--p-high); }
@@ -414,7 +535,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   line-height: 18px;
 }
 .tag { background: var(--navy-50); color: var(--navy-700); border: 1px solid var(--navy-100); }
-.badge-overdue { background: var(--danger-bg); color: var(--danger); border: 1px solid #f3b4b4; }
+.badge-overdue { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-line); }
 
 .card-actions {
   display: flex;
@@ -424,7 +545,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   gap: var(--sp-2);
   margin-top: var(--sp-3);
   padding-top: var(--sp-2);
-  border-top: 1px solid #edf0f4;
+  border-top: 1px solid var(--line-soft);
 }
 .icon-btn {
   border: 1px solid transparent;
@@ -438,7 +559,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
 .icon-btn:hover { background: var(--danger-bg); color: var(--danger); }
 .move-btn {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--field-bg);
   border-radius: var(--radius-sm);
   padding: 3px var(--sp-2);
   font-size: 12px;
@@ -470,7 +591,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   font-size: 12px;
   font-weight: 600;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--field-bg);
 }
 .confirm-row .yes { background: var(--danger); border-color: var(--danger); color: #fff; }
 
@@ -548,7 +669,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   box-shadow: var(--shadow-lg);
   font-weight: 600;
   border-left: 5px solid;
-  background: #fff;
+  background: var(--surface);
 }
 .toast-success { border-color: var(--success); color: var(--success); background: var(--success-bg); }
 .toast-warning { border-color: var(--warning); color: var(--warning); background: var(--warning-bg); }
@@ -634,7 +755,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   box-shadow: 0 1px 1px rgba(0, 0, 0, .08);
   white-space: pre-line;
 }
-.chat-msg.bot  { align-self: flex-start; background: #fff; }
+.chat-msg.bot  { align-self: flex-start; background: var(--wa-bot); }
 .chat-msg.user { align-self: flex-end; background: var(--wa-bubble); }
 .chat-suggest {
   padding: var(--sp-3) var(--sp-4);
@@ -643,9 +764,9 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
 .chat-suggest h3 { margin: 0 0 var(--sp-2); font-size: 12px; font-weight: 600; color: var(--ink-2); }
 .chat-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
 .chat-chip {
-  border: 1px solid var(--wa-dark);
-  background: #fff;
-  color: var(--wa-dark);
+  border: 1px solid var(--wa-ink);
+  background: var(--field-bg);
+  color: var(--wa-ink);
   border-radius: 999px;
   padding: var(--sp-1) var(--sp-3);
   font: inherit;
@@ -658,7 +779,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   font-size: 12px;
   color: var(--ink-2);
 }
-.chat-foot a { color: var(--wa-dark); font-weight: 700; }
+.chat-foot a { color: var(--wa-ink); font-weight: 700; }
 
 @media (prefers-reduced-motion: reduce) {
   .bar, .seg, .column { transition: none; }
@@ -679,6 +800,15 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
     </div>
     <div class="header-side">
       <p class="demo-note">Demo mode: tasks live in memory only, so refreshing the page resets the board.</p>
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark mode">
+        <svg id="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M20.7 14.6A8.5 8.5 0 0 1 9.4 3.3a8.5 8.5 0 1 0 11.3 11.3z"/>
+        </svg>
+        <svg id="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden>
+          <circle cx="12" cy="12" r="4.5" fill="currentColor"/>
+          <path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>
+        </svg>
+      </button>
       <button type="button" class="btn btn-light" id="open-add-btn" aria-haspopup="dialog">+ Add task</button>
     </div>
   </div>
@@ -1489,6 +1619,31 @@ function trapFocus(event) {
 }
 
 /* =========================================================
+   Light / dark theme toggle (memory only; starts from the device setting)
+   ========================================================= */
+const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+function currentTheme() {
+  return document.documentElement.dataset.theme || (darkQuery.matches ? "dark" : "light");
+}
+
+function updateThemeToggle() {
+  const dark = currentTheme() === "dark";
+  document.getElementById("theme-icon-moon").hidden = dark;
+  document.getElementById("theme-icon-sun").hidden = !dark;
+  document.getElementById("theme-toggle").setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+}
+
+function wireThemeToggle() {
+  document.getElementById("theme-toggle").addEventListener("click", () => {
+    document.documentElement.dataset.theme = currentTheme() === "dark" ? "light" : "dark";
+    updateThemeToggle();
+  });
+  darkQuery.addEventListener("change", updateThemeToggle);
+  updateThemeToggle();
+}
+
+/* =========================================================
    IT Support chat widget
    ========================================================= */
 function addChatMessage(text, who) {
@@ -1702,6 +1857,7 @@ function init() {
   });
 
   renderBoard();
+  wireThemeToggle();
   wireChatWidget();
   scheduleWelcome();
 }
