@@ -10,8 +10,8 @@ There are two independent versions, each a complete single file (markup, one `<s
 
 | File | Design | Live URL |
 |---|---|---|
-| `index.html` | Original design (header summary pills) | https://hooisiam.github.io/kanban4/ |
-| `v2/index.html` | Redesign with the stacked progress chart and a CSP | https://hooisiam.github.io/kanban4/v2/ |
+| `index.html` | Original design (header summary pills) and a CSP | https://hooisiam.github.io/kanban4/ |
+| `v2/index.html` | Redesign with the stacked progress chart, also with a CSP | https://hooisiam.github.io/kanban4/v2/ |
 
 Keep them separate: change the version the user asks about, and don't copy changes across unless asked. Both share the same state/render architecture below; the v2-only parts are marked.
 
@@ -58,9 +58,9 @@ The command should print nothing.
 - **Dates:** compared as local `YYYY-MM-DD` strings (`todayISO()`, `addDays()`) to avoid timezone bugs. Seed due dates are relative to today, so the Overdue badges always show in the demo.
 - **Reference lists:** `STATUSES`, `PROJECTS`, `CATEGORIES` and `PRIORITIES` fill the selects at init and are used for validation. A column's priority colour comes from `PRIORITY_CLASS` through a `--prio-color` CSS custom property.
 
-## Content-Security-Policy (v2 only)
+## Content-Security-Policy (both versions)
 
-`v2/index.html` has a CSP `<meta>` tag: scripts are allowed only by the SHA-256 hash of the inline script, and `connect-src` allows only `https://formsubmit.co`. **Any edit to the `<script>` block changes its hash, and the page stops running until the hash is updated.** Recompute it after every script change:
+Both files have a CSP `<meta>` tag and a `no-referrer` referrer policy: scripts are allowed only by the SHA-256 hash of the inline script, and `connect-src` allows only `https://formsubmit.co`. **Any edit to the `<script>` block changes its hash, and the page stops running until the hash is updated.** Recompute it after every script change, setting `p` to the file you edited (`index.html` or `v2/index.html`):
 
 ```bash
 python3 -c "import re,hashlib,base64;p='v2/index.html';s=open(p).read();b=re.findall(r'<script>(.*?)</script>',s,re.S)[-1];h=base64.b64encode(hashlib.sha256(b.encode()).digest()).decode();open(p,'w').write(re.sub(r\"'sha256-[^']*'\",f\"'sha256-{h}'\",s,count=1));print(h)"

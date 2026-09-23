@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Security: only this page's own inline script/styles may run, and the only
+     network call allowed is the FormSubmit endpoint. The script hash must be
+     recomputed whenever the inline script changes (see CLAUDE.md). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-qfr4PWY07Htn9FpTuyb+GnTyK/Vfu9NuAO5fskAAhQY='; style-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>UOB IT PMO — Kanban</title>
 <style>
 /* =========================================================
@@ -449,7 +454,7 @@ main { padding: var(--sp-4) var(--sp-5) var(--sp-6); }
       </div>
       <div class="field">
         <label for="filter-assignee">Assignee contains</label>
-        <input type="text" id="filter-assignee" placeholder="e.g. Tan" autocomplete="off">
+        <input type="text" id="filter-assignee" placeholder="e.g. Tan" autocomplete="off" maxlength="60">
       </div>
       <div class="field">
         <label for="filter-priority">Priority</label>
@@ -802,6 +807,7 @@ async function notifyNewTask(task) {
     const res = await fetch(FORMSUBMIT_ENDPOINT, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
+      referrerPolicy: "no-referrer",
       signal: controller.signal,
       body: JSON.stringify({
         _subject: `[UOB IT PMO] New task ${task.id}: ${task.title}`,
@@ -851,6 +857,7 @@ function validateForm(data) {
   if (!PROJECTS.includes(data.project)) errors.project = "Choose a project / workstream.";
   if (!CATEGORIES.includes(data.category)) errors.category = "Choose a category.";
   if (!data.assignee) errors.assignee = "Assignee is required.";
+  else if (data.assignee.length > 60) errors.assignee = "Assignee must be 60 characters or fewer.";
   if (!PRIORITIES.includes(data.priority)) errors.priority = "Choose a priority.";
   if (!data.dueDate) errors.dueDate = "Due date is required.";
   else if (!/^\d{4}-\d{2}-\d{2}$/.test(data.dueDate)) errors.dueDate = "Enter a valid date.";
