@@ -7,6 +7,18 @@
       "skillPath": "skills/anthropic-cybersecurity-skills/SKILL.md",
       "computedHash": "4e568bb6856c4e960f1935a18cba25befcc0d8a84687804773306ea7c5b67d95"
     },
+    "better-colors": {
+      "source": "jakubkrehel/skills",
+      "sourceType": "github",
+      "skillPath": "skills/better-colors/SKILL.md",
+      "computedHash": "1a6ff21c2ee760744f119cf6166df95ab4d05335c771c04a2ecb4c49cbbe5f1c"
+    },
+    "color-palette": {
+      "source": "nhatmobile1/color-palette-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "0a146bdfd8d7eb167a6c338a37ad4e0a61f74a3dec9476cffd923d692e7561e5"
+    },
     "cybersecurity-analyst": {
       "source": "rysweet/amplihack",
       "sourceType": "github",
