@@ -4,6 +4,10 @@ A single-file IT Project Management Kanban board for internal demos and training
 
 **Live demo:** https://hooisiam.github.io/kanban4/
 
+## Screenshot
+
+![UOB IT PMO Kanban board](docs/screenshot.png)
+
 ## Features
 
 - Four columns (Backlog, In Progress, Blocked, Done) with a count badge on each

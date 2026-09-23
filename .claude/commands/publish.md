@@ -1,7 +1,7 @@
 ---
 description: Security-scan the project, update README, GitHub About section and Pages workflow, then push to GitHub
 argument-hint: <github-repo> [description]   e.g. hooisiam/kanban4 or https://github.com/hooisiam/kanban4
-allowed-tools: Bash, Read, Edit, Write, Grep, Glob
+allowed-tools: Bash, Read, Edit, Write, Grep, Glob, mcp__playwright__browser_navigate, mcp__playwright__browser_resize, mcp__playwright__browser_wait_for, mcp__playwright__browser_take_screenshot, mcp__playwright__browser_close
 ---
 
 # Publish this project to GitHub
@@ -55,12 +55,30 @@ Create or update `README.md` from what the code actually does (read `index.html`
 - Configuration (the `FORMSUBMIT_ENDPOINT` constant)
 - Deployment (GitHub Pages via GitHub Actions, triggered on push to `main`)
 - A disclaimer that it's an internal demo/training tool and not an official UOB system
+- A **Screenshot** section right after the summary / Live demo link, pointing at `docs/screenshot.png` (see step 3)
 
-## 3. GitHub Pages workflow
+## 3. Screenshot
+
+Capture a fresh screenshot of the board with the **Playwright MCP** tools (`mcp__playwright__*`, configured in `.mcp.json`) and embed it in the README.
+
+1. If the Playwright MCP tools aren't available (for example, the server failed to start because `npx`/Node.js is missing), tell the user and ask whether to skip this step. Keep any existing `docs/screenshot.png`.
+2. Serve the project locally so the page loads over HTTP: run `python3 -m http.server 8765 --bind 127.0.0.1` in the background from the repo root.
+3. `browser_resize` to 1440 × 900, then `browser_navigate` to `http://127.0.0.1:8765/index.html`. Wait until the seeded cards have rendered (`browser_wait_for` the text `UOB-ITPM-0001`).
+4. Take a `browser_take_screenshot` of the viewport (not full page) as PNG. Copy the saved file to `docs/screenshot.png` (create `docs/` if it's missing), overwriting the old one.
+5. Call `browser_close` and stop the HTTP server.
+6. Open `docs/screenshot.png` with Read to check that it shows the four columns with cards and no error page. Then make sure the README contains:
+   ```markdown
+   ## Screenshot
+
+   ![UOB IT PMO Kanban board](docs/screenshot.png)
+   ```
+7. Stage `docs/screenshot.png` together with the README in step 5. It must stay under the 5 MB limit from step 1.
+
+## 4. GitHub Pages workflow
 
 Make sure `.github/workflows/pages.yml` exists and deploys the static site with the official actions: `actions/checkout`, `actions/configure-pages`, `actions/upload-pages-artifact`, `actions/deploy-pages`, on `push` to `main` plus `workflow_dispatch`, with `permissions: contents: read, pages: write, id-token: write` and a `pages` concurrency group. Stage only the files the site needs (e.g. `index.html`) into `_site/`, never the whole repo. If the file already exists and meets this, leave it alone; otherwise, fix it. Use current major versions of the actions.
 
-## 4. Commit and push
+## 5. Commit and push
 
 - Show `git status` and a `git diff --stat` summary.
 - Stage only the intended files (never `git add -A` blindly; exclude anything flagged in step 1).
@@ -68,7 +86,7 @@ Make sure `.github/workflows/pages.yml` exists and deploys the static site with 
 - **Ask the user to confirm before pushing** and show them the target (`OWNER/REPO`, branch). Then run `git push -u origin <branch>`.
 - Never force-push. If the push is rejected as non-fast-forward, run `git pull --rebase origin <branch>`, resolve any conflicts, rerun the security scan if new files came in, and ask again.
 
-## 5. About section
+## 6. About section
 
 Update the repository's About panel:
 
@@ -81,7 +99,7 @@ gh repo edit OWNER/REPO \
 
 Use the description argument if one was given; otherwise write one sentence (≤ 350 chars) from the README summary. Show the description, homepage and topics before applying them, and keep any topics that are already there.
 
-## 6. Enable Pages and verify the deploy
+## 7. Enable Pages and verify the deploy
 
 - Set Pages to build from GitHub Actions:
   ```bash
@@ -92,6 +110,6 @@ Use the description argument if one was given; otherwise write one sentence (≤
 - When it succeeds, `curl -sI https://owner.github.io/REPO/` and confirm HTTP 200 (a new site can take a minute to appear, so retry a few times).
 - If it fails, show the failing step with `gh run view <id> --log-failed` and suggest a fix.
 
-## 7. Report
+## 8. Report
 
 Finish with a short summary: security scan result, files changed, commit SHA, repo URL, live Pages URL, and anything the user still needs to do (such as rotating a leaked key or reviewing WARNs).
