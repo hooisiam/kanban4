@@ -1,2 +1,6 @@
 .DS_Store
 .playwright-mcp/
+
+# color-palette skill: installed locally only, not republished (see skills-lock.json)
+.agents/skills/color-palette/
+.claude/skills/color-palette
