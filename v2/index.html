@@ -28,13 +28,15 @@
   --surface: #ffffff;
   --page:    #eef2f8;
 
-  /* Status colours (validated as a set: CVD-safe in stacking order
-     Done | In Progress | Blocked | Backlog). Shared by the chart,
-     legend and column headers. */
-  --s-done:     #2d55b8;
-  --s-progress: #3399e0;
-  --s-blocked:  #c47600;
-  --s-backlog:  #9aa8f0;
+  /* Status colours (validated as a set: every pair stays distinct
+     under protanopia, deuteranopia and tritanopia, in both themes, not
+     only chart neighbours). Shared by the chart, legend and column
+     headers. The pale Backlog fill gets a 1px edge in light mode. */
+  --s-done:        #2d55b8;
+  --s-progress:    #2b8fd6;
+  --s-blocked:     #c47600;
+  --s-backlog:     #b7c1f7;
+  --s-backlog-edge: #5a6bc4;
 
   /* Priority (cards only) */
   --p-critical: #b42318;
@@ -77,6 +79,8 @@
   --field-bg:       #ffffff;
   --line-soft:      #edf0f4;
   --line-strong:    #b8c4d6;
+  --field-border:   #7b879c;
+  --focus-ring:     #1d4488;
   --danger-line:    #f3b4b4;
   --wa-ink:         #075e54;
   --wa-bot:         #ffffff;
@@ -128,6 +132,11 @@
     --field-bg:       #0f192c;
     --line-soft:      #24324d;
     --line-strong:    #45577a;
+    --field-border:   #5d6f92;
+    --focus-ring:     #ffbf47;
+    --s-done:         #466fd2;
+    --s-progress:     #3399e0;
+    --s-backlog-edge: transparent;
     --danger-line:    #7a2e33;
     --wa-ink:         #5fd4bd;
     --wa-bot:         #1c2a40;
@@ -173,6 +182,11 @@
   --field-bg:       #0f192c;
   --line-soft:      #24324d;
   --line-strong:    #45577a;
+  --field-border:   #5d6f92;
+  --focus-ring:     #ffbf47;
+  --s-done:         #466fd2;
+  --s-progress:     #3399e0;
+  --s-backlog-edge: transparent;
   --danger-line:    #7a2e33;
   --wa-ink:         #5fd4bd;
   --wa-bot:         #1c2a40;
@@ -195,7 +209,9 @@ body {
 h1, h2, h3, p { margin: 0; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
-:focus-visible { outline: 3px solid #ffbf47; outline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+/* Dark bars keep the amber ring (8.39:1 header, 4.67:1 chat header). */
+.app-header, .chat-header { --focus-ring: #ffbf47; }
 
 .visually-hidden {
   position: absolute;
@@ -343,6 +359,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
 .st-progress { --seg-color: var(--s-progress); --seg-ink: #0d1f3f; }
 .st-blocked  { --seg-color: var(--s-blocked);  --seg-ink: #1c1100; }
 .st-backlog  { --seg-color: var(--s-backlog);  --seg-ink: #0d1f3f; }
+.st-backlog .swatch, .seg.st-backlog { box-shadow: inset 0 0 0 1px var(--s-backlog-edge); }
 
 .by-project { margin-top: var(--sp-5); }
 .by-project-head {
@@ -418,7 +435,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
 .field { display: flex; flex-direction: column; gap: var(--sp-1); }
 .field label { font-weight: 600; font-size: 13px; color: var(--ink-2); }
 .field input, .field select, .field textarea {
-  border: 1px solid var(--line);
+  border: 1px solid var(--field-border);
   border-radius: var(--radius-sm);
   padding: var(--sp-2);
   background: var(--field-bg);
