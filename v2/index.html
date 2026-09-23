@@ -6,7 +6,7 @@
 <!-- Security: only this page's own inline script/styles may run, and the only
      network call allowed is the FormSubmit endpoint. The script hash must be
      recomputed whenever the inline script changes (see CLAUDE.md). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-Wsy1mTVRi8rvruQh9hfr1ddB816zQOJbQlkQerxxPCY='; style-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-O+IWEEFF8R613Gwtyz+AOiJ+rGyw1gtIfR46GxMaMzs='; style-src 'unsafe-inline'; connect-src https://formsubmit.co; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <title>UOB IT PMO — Kanban</title>
 <style>
@@ -56,6 +56,12 @@
   --sp-5: 24px;
   --sp-6: 32px;
   --sp-7: 48px;
+
+  /* Chat widget (WhatsApp-style greens; white text passes AA on both) */
+  --wa-green:  #128c7e;
+  --wa-dark:   #075e54;
+  --wa-bg:     #ece5dd;
+  --wa-bubble: #dcf8c6;
 
   --radius: 10px;
   --radius-sm: 6px;
@@ -529,7 +535,7 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
 .toast-region {
   position: fixed;
   right: var(--sp-4);
-  bottom: var(--sp-4);
+  bottom: calc(var(--sp-4) + 72px); /* clear the chat launcher */
   display: flex;
   flex-direction: column;
   gap: var(--sp-2);
@@ -548,8 +554,115 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
 .toast-warning { border-color: var(--warning); color: var(--warning); background: var(--warning-bg); }
 .toast-info    { border-color: var(--navy-700); color: var(--navy-900); background: var(--navy-50); }
 
+/* =========================================================
+   11. IT Support chat widget (bottom right)
+   ========================================================= */
+.chat-launcher {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: var(--sp-4);
+  z-index: 40;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--wa-green);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform .15s ease, background .15s ease;
+}
+.chat-launcher:hover { background: var(--wa-dark); transform: scale(1.06); }
+.chat-launcher:focus-visible { outline: 3px solid var(--navy-700); outline-offset: 3px; }
+.chat-launcher svg { width: 30px; height: 30px; }
+
+.chat-panel {
+  position: fixed;
+  right: var(--sp-4);
+  bottom: calc(var(--sp-4) + 68px);
+  z-index: 40;
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+.chat-panel[hidden] { display: none; }
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--wa-dark);
+  color: #fff;
+}
+.chat-header .puppy { width: 52px; height: 52px; flex: none; border-radius: 50%; background: #fff; }
+.chat-header h2 { margin: 0; font-family: var(--font-display); font-size: 16px; font-weight: 700; }
+.chat-header p { margin: 0; font-size: 12px; opacity: .9; }
+.chat-header .chat-title { flex: 1; }
+.chat-close {
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.chat-close:hover { background: rgba(255, 255, 255, .15); }
+.chat-log {
+  flex: 1;
+  min-height: 120px;
+  overflow-y: auto;
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--wa-bg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+.chat-msg {
+  max-width: 85%;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .08);
+  white-space: pre-line;
+}
+.chat-msg.bot  { align-self: flex-start; background: #fff; }
+.chat-msg.user { align-self: flex-end; background: var(--wa-bubble); }
+.chat-suggest {
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--line);
+}
+.chat-suggest h3 { margin: 0 0 var(--sp-2); font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.chat-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.chat-chip {
+  border: 1px solid var(--wa-dark);
+  background: #fff;
+  color: var(--wa-dark);
+  border-radius: 999px;
+  padding: var(--sp-1) var(--sp-3);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.chat-chip:hover { background: var(--wa-dark); color: #fff; }
+.chat-foot {
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.chat-foot a { color: var(--wa-dark); font-weight: 700; }
+
 @media (prefers-reduced-motion: reduce) {
   .bar, .seg, .column { transition: none; }
+  .chat-launcher { transition: none; }
 }
 </style>
 </head>
@@ -705,6 +818,47 @@ main { max-width: 1440px; margin: 0 auto; padding: 0 var(--sp-5) var(--sp-6); }
   </div>
 </div>
 
+<!-- =========================================================
+     IT Support chat widget (wired by wireChatWidget)
+     ========================================================= -->
+<button type="button" class="chat-launcher" id="chat-launcher" aria-haspopup="dialog" aria-expanded="false" aria-controls="chat-panel" aria-label="Open IT Support chat">
+  <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+    <path fill="currentColor" d="M16 3C8.8 3 3 8.6 3 15.5c0 2.5.8 4.9 2.2 6.9L3.6 28.6l6.5-1.7c1.8.9 3.8 1.4 5.9 1.4 7.2 0 13-5.6 13-12.5S23.2 3 16 3zm0 22.8c-1.9 0-3.7-.5-5.3-1.4l-.4-.2-3.8 1 1-3.6-.3-.4a10 10 0 0 1-1.9-5.7C5.3 9.9 10.1 5.3 16 5.3s10.7 4.6 10.7 10.2S21.9 25.8 16 25.8z"/>
+    <path fill="currentColor" d="M21.9 18.6c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2l-1 1.2c-.2.2-.4.2-.7.1a8.6 8.6 0 0 1-4.3-3.7c-.3-.6.3-.5.9-1.7.1-.2 0-.4 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.1 1.1-1.1 2.7s1.2 3.1 1.3 3.3c.2.2 2.3 3.5 5.5 4.9 2 .9 2.8.9 3.8.8.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.3-.3-.4-.6-.5z"/>
+  </svg>
+</button>
+
+<div class="chat-panel" id="chat-panel" role="dialog" aria-modal="false" aria-labelledby="chat-title" hidden>
+  <div class="chat-header">
+    <svg class="puppy" viewBox="0 0 64 64" role="img" aria-label="Cartoon puppy">
+      <ellipse cx="14" cy="28" rx="8" ry="15" fill="#8b5a2b" transform="rotate(20 14 28)"/>
+      <ellipse cx="50" cy="28" rx="8" ry="15" fill="#8b5a2b" transform="rotate(-20 50 28)"/>
+      <circle cx="32" cy="34" r="19" fill="#e8b878"/>
+      <ellipse cx="32" cy="42" rx="11" ry="8" fill="#f7e3c4"/>
+      <circle cx="24.5" cy="30" r="3" fill="#2b1a0e"/>
+      <circle cx="39.5" cy="30" r="3" fill="#2b1a0e"/>
+      <circle cx="25.5" cy="29" r="1" fill="#fff"/>
+      <circle cx="40.5" cy="29" r="1" fill="#fff"/>
+      <ellipse cx="32" cy="38" rx="3.6" ry="2.6" fill="#2b1a0e"/>
+      <path d="M27.5 42q4.5 3.5 9 0" fill="none" stroke="#2b1a0e" stroke-width="1.4" stroke-linecap="round"/>
+      <path d="M30 43.5h4v3.5a2 2 0 0 1-4 0z" fill="#e8667a"/>
+      <circle cx="19" cy="36" r="2.4" fill="#f2a0a8" opacity=".7"/>
+      <circle cx="45" cy="36" r="2.4" fill="#f2a0a8" opacity=".7"/>
+    </svg>
+    <div class="chat-title">
+      <h2 id="chat-title">IT Support Buddy</h2>
+      <p>Typically replies instantly</p>
+    </div>
+    <button type="button" class="chat-close" id="chat-close-btn" aria-label="Close IT Support chat">×</button>
+  </div>
+  <div class="chat-log" id="chat-log" aria-live="polite"></div>
+  <div class="chat-suggest">
+    <h3 id="chat-suggest-title">Suggested questions</h3>
+    <div class="chat-chips" id="chat-chips" role="group" aria-labelledby="chat-suggest-title"></div>
+  </div>
+  <p class="chat-foot">Still stuck? Call the IT Support hotline <a id="chat-hotline" href="#"></a></p>
+</div>
+
 <!-- Toast notifications (announced politely to screen readers) -->
 <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
 
@@ -727,6 +881,21 @@ const NOTIFY_TIMEOUT_MS = 12000;
 // Welcome dialog: shown once after the visitor has been on the page this long.
 const WELCOME_DELAY_MS = 10000;
 const SUPPORT_HOTLINE = "18181818181";
+// Chat widget: suggested IT Support questions and their canned answers.
+const SUPPORT_QUERIES = [
+  { q: "How do I reset my password?",
+    a: "Go to the self-service password portal from the intranet home page, choose \"Forgot password\" and follow the prompts. You'll need your registered mobile for the one-time code." },
+  { q: "My VPN won't connect",
+    a: "Try these in order:\n1. Check your internet connection.\n2. Quit and reopen the VPN client.\n3. Restart your laptop.\nIf it still fails, note the error code and call the hotline." },
+  { q: "Request new software",
+    a: "Raise a Software Request in the IT service catalogue. Include the software name, version and business reason. Your line manager will be asked to approve it." },
+  { q: "My laptop is running slow",
+    a: "Save your work and restart (it clears most slowdowns). Close unused browser tabs and check that updates have finished installing. If it's still slow, log a hardware ticket." },
+  { q: "Report a phishing email",
+    a: "Don't click any links or open attachments. Use the \"Report Phishing\" button in Outlook, then delete the email. If you already clicked something, call the hotline right away." },
+  { q: "Printer isn't working",
+    a: "Check the printer shows online, has paper and no jam. Remove and re-add it from Settings → Printers. Still stuck? Log a ticket with the printer's asset tag." },
+];
 
 /* =========================================================
    Reference data
@@ -1320,6 +1489,62 @@ function trapFocus(event) {
 }
 
 /* =========================================================
+   IT Support chat widget
+   ========================================================= */
+function addChatMessage(text, who) {
+  const log = document.getElementById("chat-log");
+  const msg = document.createElement("div");
+  msg.className = `chat-msg ${who}`;
+  msg.textContent = text;
+  log.appendChild(msg);
+  log.scrollTop = log.scrollHeight;
+}
+
+function openChat() {
+  document.getElementById("chat-panel").hidden = false;
+  document.getElementById("chat-launcher").setAttribute("aria-expanded", "true");
+  document.querySelector("#chat-chips .chat-chip").focus();
+}
+
+function closeChat() {
+  const panel = document.getElementById("chat-panel");
+  if (panel.hidden) return;
+  panel.hidden = true;
+  const launcher = document.getElementById("chat-launcher");
+  launcher.setAttribute("aria-expanded", "false");
+  launcher.focus();
+}
+
+function wireChatWidget() {
+  const chips = document.getElementById("chat-chips");
+  SUPPORT_QUERIES.forEach((item, i) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chat-chip";
+    chip.dataset.index = String(i);
+    chip.textContent = item.q;
+    chips.appendChild(chip);
+  });
+  chips.addEventListener("click", (e) => {
+    const chip = e.target.closest(".chat-chip");
+    if (!chip) return;
+    const item = SUPPORT_QUERIES[Number(chip.dataset.index)];
+    addChatMessage(item.q, "user");
+    addChatMessage(item.a, "bot");
+  });
+
+  const link = document.getElementById("chat-hotline");
+  link.textContent = SUPPORT_HOTLINE;
+  link.href = `tel:${SUPPORT_HOTLINE}`;
+  addChatMessage("Woof! Hi there 👋 I'm your IT Support Buddy. Pick a question below and I'll fetch an answer.", "bot");
+
+  document.getElementById("chat-launcher").addEventListener("click", () => {
+    if (document.getElementById("chat-panel").hidden) openChat(); else closeChat();
+  });
+  document.getElementById("chat-close-btn").addEventListener("click", closeChat);
+}
+
+/* =========================================================
    Board interactions: card buttons (click delegation)
    ========================================================= */
 function handleBoardClick(event) {
@@ -1468,6 +1693,7 @@ function init() {
     if (e.key !== "Escape") return;
     if (!document.getElementById("welcome-backdrop").hidden) { closeWelcome(); return; }
     if (!document.getElementById("modal-backdrop").hidden) { closeModal(); return; }
+    if (!document.getElementById("chat-panel").hidden) { closeChat(); return; }
     if (ui.openMoveId) {
       ui.focusKey = `move:${ui.openMoveId}`;
       ui.openMoveId = null;
@@ -1476,6 +1702,7 @@ function init() {
   });
 
   renderBoard();
+  wireChatWidget();
   scheduleWelcome();
 }
 
